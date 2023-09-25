@@ -9,13 +9,13 @@ namespace blogpessoal.Validator
         {
             RuleFor(p => p.Titulo)
                     .NotEmpty()
-                    .MaximumLength(5)
-                    .MinimumLength(100);
+                    .MaximumLength(100)
+                    .MinimumLength(5);
 
             RuleFor(p => p.Titulo)
                     .NotEmpty()
-                    .MaximumLength(10)
-                    .MinimumLength(1000);
+                    .MaximumLength(1000)
+                    .MinimumLength(10);
 
 
         }

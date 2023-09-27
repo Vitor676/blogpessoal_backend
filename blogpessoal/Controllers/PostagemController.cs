@@ -35,7 +35,7 @@ namespace blogpessoal.Controllers
         {
             var Resposta = await _postagemService.GetById(id);
 
-            if (Resposta is not null)
+            if (Resposta is null)
                 return NotFound();
             return Ok(Resposta);
         }
@@ -47,6 +47,7 @@ namespace blogpessoal.Controllers
 
 
         }
+
         [HttpPost]
         public async Task<ActionResult> Create([FromBody] Postagem postagem)
         {
@@ -55,10 +56,16 @@ namespace blogpessoal.Controllers
             if (!validarpostagem.IsValid)
                 return StatusCode(StatusCodes.Status400BadRequest, validarpostagem);
 
-            await _postagemService.Create(postagem);
+            var Resposta = await _postagemService.Create(postagem);
 
-            return CreatedAtAction(nameof(GetById), new {id = postagem.Id}, postagem);
+            //if para ter um retorno caso seja colocado um tema que não existe
+            if (Resposta is null)
+            {
+                return BadRequest("Tema não encontrado!");
+            }
+            return CreatedAtAction(nameof(GetById), new { id = postagem.Id }, postagem);
         }
+
         [HttpPut]
         public async Task<ActionResult> Update([FromBody] Postagem postagem)
         {
@@ -75,10 +82,11 @@ namespace blogpessoal.Controllers
             var Resposta = await _postagemService.Update(postagem);
 
             if (Resposta is null)
-                return NotFound("Postagem não encontrada !");
+                return NotFound("Postagem e/o Tema não encontrados !");
 
             return Ok(Resposta);
         }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(long id)
         {

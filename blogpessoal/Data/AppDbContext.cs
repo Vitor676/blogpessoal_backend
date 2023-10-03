@@ -5,6 +5,7 @@ namespace blogpessoal.Data
 {
     public class AppDbContext : DbContext
     {
+<<<<<<< HEAD
         public AppDbContext(DbContextOptions<AppDbContext> options) 
         : base(options) { }
 
@@ -32,6 +33,31 @@ namespace blogpessoal.Data
         public DbSet<Postagem> Postagens { get; set; } = null!;
         public DbSet<Tema> Temas { get; set; } = null!;
         public DbSet<User> Users { get; set; } = null!;
+=======
+        public AppDbContext(DbContextOptions <AppDbContext> options) : base(options)
+        {
+
+        }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Postagem>().ToTable("tb_postagens");
+
+            modelBuilder.Entity<Tema>().ToTable("tb_temas");
+
+            _= modelBuilder.Entity<Postagem>()
+
+                .HasOne( _=>_.Tema)                  //indica lado um da relação
+
+                .WithMany(t => t.Postagem)           //indica lado muitos 
+
+                .HasForeignKey("TemaId")            //indica foringkey
+
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+
+        public DbSet<Postagem> Postagens { get; set; } = null!;
+        public DbSet<Tema> Temas { get; set; } = null!;
+>>>>>>> 2ef569dc9bddd5e68a878668df79ade0ede6dff5
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -44,7 +70,11 @@ namespace blogpessoal.Data
                 //Se uma propriedade da Classe Auditable estiver sendo criada. 
                 if (insertedEntry is Auditable auditableEntity)
                 {
+<<<<<<< HEAD
                     auditableEntity.Data = new DateTimeOffset(DateTime.Now, new TimeSpan (-3,0,0));
+=======
+                    auditableEntity.Data = new DateTimeOffset(DateTime.Now, new TimeSpan(-3, 0, 0));
+>>>>>>> 2ef569dc9bddd5e68a878668df79ade0ede6dff5
                 }
             }
 
@@ -63,5 +93,11 @@ namespace blogpessoal.Data
 
             return base.SaveChangesAsync(cancellationToken);
         }
+<<<<<<< HEAD
     }
 }
+=======
+
+    }
+}
+>>>>>>> 2ef569dc9bddd5e68a878668df79ade0ede6dff5

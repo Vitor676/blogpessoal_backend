@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 using blogpessoal.Data;
 using blogpessoal.Model;
@@ -12,6 +13,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
+=======
+using blogpessoal.Data;
+using blogpessoal.Model;
+using blogpessoal.Validator;
+using FluentValidation;
+using Microsoft.EntityFrameworkCore;
+using blogpessoal.Service;
+using blogpessoal.Service.Implements;
+>>>>>>> 2ef569dc9bddd5e68a878668df79ade0ede6dff5
 namespace blogpessoal
 {
     public class Program
@@ -19,6 +29,7 @@ namespace blogpessoal
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+<<<<<<< HEAD
 
             // Add services to the container.
 
@@ -32,10 +43,25 @@ namespace blogpessoal
             // Conexão com o banco de dados
             var connectionstring = builder.Configuration
                .GetConnectionString("DefaultConnection");
+=======
+            // Add services to the container.
+
+            // Para não dar Loop Infinito 
+            builder.Services.AddControllers()
+           .AddNewtonsoftJson(options =>
+            {
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+            });
+            //Conexão com o Banco de dados 
+
+            var connectionstring = builder.Configuration
+     .GetConnectionString("DefaultConnection");
+>>>>>>> 2ef569dc9bddd5e68a878668df79ade0ede6dff5
 
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(connectionstring)
             );
+<<<<<<< HEAD
 
             // Registrar a validação das entidades
 
@@ -66,32 +92,60 @@ namespace blogpessoal
                     IssuerSigningKey = new SymmetricSecurityKey(key)
                 };
             });
+=======
+            // Validação das Entidades
+            builder.Services.AddTransient<IValidator<Postagem>, PostagemValidator>();
+            builder.Services.AddTransient<IValidator<Tema>, TemaValidator>();
+
+            // Registrar as Classes e Interfaces Service
+            builder.Services.AddScoped<IPostagemService, PostagemService>();
+            builder.Services.AddScoped<ITemaService, TemaService>();
+>>>>>>> 2ef569dc9bddd5e68a878668df79ade0ede6dff5
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+<<<<<<< HEAD
             // Configuração do CORS
             builder.Services.AddCors(options =>
             {
+=======
+            //Configuração do CORS
+           
+            builder.Services.AddCors(options => {
+>>>>>>> 2ef569dc9bddd5e68a878668df79ade0ede6dff5
                 options.AddPolicy(name: "MyPolicy",
                     policy =>
                     {
                         policy.AllowAnyOrigin()
+<<<<<<< HEAD
                               .AllowAnyHeader()
                               .AllowAnyMethod();
+=======
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+>>>>>>> 2ef569dc9bddd5e68a878668df79ade0ede6dff5
                     });
             });
 
             var app = builder.Build();
+<<<<<<< HEAD
 
             // Configuração para gerar o banco de dados automaticamente 
+=======
+            // Criar o Banco de dados e as tabelas Automaticamente
+>>>>>>> 2ef569dc9bddd5e68a878668df79ade0ede6dff5
             using (var scope = app.Services.CreateAsyncScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 dbContext.Database.EnsureCreated();
             }
 
+<<<<<<< HEAD
+=======
+            app.UseDeveloperExceptionPage();
+>>>>>>> 2ef569dc9bddd5e68a878668df79ade0ede6dff5
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -99,6 +153,7 @@ namespace blogpessoal
                 app.UseSwaggerUI();
             }
 
+<<<<<<< HEAD
             // O CORS é inicializado aqui
             app.UseCors("MyPolicy");
 
@@ -106,6 +161,11 @@ namespace blogpessoal
 
             app.UseAuthorization();
 
+=======
+    app.UseAuthorization();
+
+            app.UseCors("MyPolicy");
+>>>>>>> 2ef569dc9bddd5e68a878668df79ade0ede6dff5
             app.MapControllers();
 
             app.Run();

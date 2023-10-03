@@ -13,11 +13,19 @@ namespace blogpessoal.Service.Implements
             _context = context;
         }
 
+<<<<<<< HEAD
         public async Task<IEnumerable<Postagem>> GetAll()
         {
             return await _context.Postagens
                 .Include(p => p.Tema)
                 .Include(p => p.Usuario)
+=======
+
+        public async Task<IEnumerable<Postagem>> GetAll()
+        {
+            return await _context.Postagens
+                .Include(postagem => postagem.Tema)
+>>>>>>> 2ef569dc9bddd5e68a878668df79ade0ede6dff5
                 .ToListAsync();
         }
 
@@ -25,6 +33,7 @@ namespace blogpessoal.Service.Implements
         {
             try
             {
+<<<<<<< HEAD
                 var Postagem = await _context.Postagens
                     .Include(p => p.Tema)
                     .Include(p => p.Usuario)
@@ -34,14 +43,31 @@ namespace blogpessoal.Service.Implements
             catch
             {
                 return null;
+=======
+
+                var Postagem = await _context.Postagens
+                    .Include(postagem => postagem.Tema)
+                    .FirstAsync(i => i.Id == id);
+                return Postagem;
+
+            }
+            catch 
+            { 
+            return null;
+            
+>>>>>>> 2ef569dc9bddd5e68a878668df79ade0ede6dff5
             }
         }
 
         public async Task<IEnumerable<Postagem>> GetByTitulo(string titulo)
         {
             var Postagem = await _context.Postagens
+<<<<<<< HEAD
                 .Include(p => p.Tema)
                 .Include(p => p.Usuario)
+=======
+                .Include(postagem => postagem.Tema)
+>>>>>>> 2ef569dc9bddd5e68a878668df79ade0ede6dff5
                 .Where(p => p.Titulo.Contains(titulo))
                 .ToListAsync();
 
@@ -51,6 +77,7 @@ namespace blogpessoal.Service.Implements
         {
             if (postagem.Tema is not null)
             {
+<<<<<<< HEAD
                 var BuscarTema = await _context.Temas.FindAsync(postagem.Tema.Id);
 
                 if (BuscarTema is null)
@@ -67,6 +94,25 @@ namespace blogpessoal.Service.Implements
             await _context.SaveChangesAsync();
 
             return postagem;
+=======
+                var BuscaTema = await _context.Temas.FindAsync(postagem.Tema.Id);
+
+                if (BuscaTema is null)
+                {
+                    return null;
+                }
+            }
+
+            postagem.Tema = postagem.Tema is not null ? _context.Temas.FirstOrDefault(t => t.Id == postagem.Tema.Id) : null;
+
+            //adiciona na fila
+            await _context.Postagens.AddAsync(postagem);
+            //persiste na fila
+            await _context.SaveChangesAsync();
+
+            return postagem;
+
+>>>>>>> 2ef569dc9bddd5e68a878668df79ade0ede6dff5
         }
 
         public async Task<Postagem?> Update(Postagem postagem)
@@ -74,6 +120,7 @@ namespace blogpessoal.Service.Implements
             var PostagemUpdate = await _context.Postagens.FindAsync(postagem.Id);
 
             if (PostagemUpdate is null)
+<<<<<<< HEAD
                 return null;
 
             if (postagem.Tema is not null)
@@ -89,12 +136,33 @@ namespace blogpessoal.Service.Implements
 
             postagem.Usuario = postagem.Usuario is not null
                 ? await _context.Users.FirstOrDefaultAsync(u => u.Id == postagem.Usuario.Id) : null;
+=======
+            {
+                return null;
+            }
+
+            if (postagem.Tema is not null)
+            {
+                var BuscaTema = await _context.Temas.FindAsync(postagem.Tema.Id);
+
+                if (BuscaTema is null)
+                {
+                    return null;
+                }
+            }
+
+            postagem.Tema = postagem.Tema is not null ? _context.Temas.FirstOrDefault(t => t.Id == postagem.Tema.Id) : null;
+>>>>>>> 2ef569dc9bddd5e68a878668df79ade0ede6dff5
 
             _context.Entry(PostagemUpdate).State = EntityState.Detached;
             _context.Entry(postagem).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
             return postagem;
+<<<<<<< HEAD
+=======
+
+>>>>>>> 2ef569dc9bddd5e68a878668df79ade0ede6dff5
         }
         public async Task Delete(Postagem postagem)
         {

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using blogpessoal.Model;
+using Newtonsoft.Json;
 
 namespace blogpessoal.Model
 {
@@ -18,7 +19,9 @@ namespace blogpessoal.Model
         [StringLength(8000)]
         public string Texto { get; set; } = string.Empty;
 
+      
         public virtual Tema? Tema { get; set; } //Chave estrangeira 
+       
         public virtual User? Usuario { get; set; } //Chave estrangeira 
     }
 }

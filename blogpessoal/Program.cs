@@ -1,16 +1,18 @@
-
 using blogpessoal.Data;
 using blogpessoal.Model;
-using blogpessoal.Security;
-using blogpessoal.Security.Implements;
-using blogpessoal.Service;
 using blogpessoal.Service.Implements;
+using blogpessoal.Service;
 using blogpessoal.Validator;
 using FluentValidation;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using blogpessoal.Security;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using blogpessoal.Security.Implements;
+using Microsoft.OpenApi.Models;
+using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
+using blogpessoal.Configuration;
 
 namespace blogpessoal
 {
@@ -22,95 +24,177 @@ namespace blogpessoal
 
             // Add services to the container.
 
+            // Add Controller Class
             builder.Services.AddControllers()
                 .AddNewtonsoftJson(options =>
                 {
-                    options.SerializerSettings.ReferenceLoopHandling =
-                    Newtonsoft.Json.ReferenceLoopHandling.Ignore;
-                    options.SerializerSettings.NullValueHandling = 
-                    Newtonsoft.Json.NullValueHandling.Ignore;
-                });
-
-            // Conexão com o banco de dados
-            var connectionstring = builder.Configuration
-               .GetConnectionString("DefaultConnection");
-
-            builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(connectionstring)
+                    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+                }
             );
 
-            // Registrar a validação das entidades
+            // Conexão com o Banco de dados
 
+            if (builder.Configuration["Enviroment:Start"] == "PROD")
+            {
+                /* Conexão Remota (Nuvem) - PostgreSQL */
+
+                builder.Configuration
+                .SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("secrets.json");
+
+                var connectionString = builder.Configuration
+                    .GetConnectionString("ProdConnection");
+
+                builder.Services.AddDbContext<AppDbContext>(options =>
+                    options.UseNpgsql(connectionString)
+                );
+
+            }
+            else
+            {
+                /* Conexão Local - SQL Server */
+
+                var connectionString = builder.Configuration.
+                    GetConnectionString("DefaultConnection");
+
+                builder.Services.AddDbContext<AppDbContext>(options =>
+                    options.UseSqlServer(connectionString)
+                );
+            }
+
+            // Validação das Entidades
             builder.Services.AddTransient<IValidator<Postagem>, PostagemValidator>();
             builder.Services.AddTransient<IValidator<Tema>, TemaValidator>();
             builder.Services.AddTransient<IValidator<User>, UserValidator>();
 
-            // Registrar as classes de Serviço (Service)
+            // Registrar as Classes e Interfaces Service
             builder.Services.AddScoped<IPostagemService, PostagemService>();
             builder.Services.AddScoped<ITemaService, TemaService>();
             builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddTransient<IAuthService, AuthService>();
 
-            builder.Services.AddAuthentication(options =>
+            // Adicionar a Validação do Token JWT
+
+            builder.Services.AddAuthentication(x =>
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(options =>
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(o =>
             {
-                var key = Encoding.UTF8.GetBytes(Settings.Secret);
-                options.SaveToken = true;
-                options.TokenValidationParameters = new TokenValidationParameters
+                var Key = Encoding.UTF8.GetBytes(Settings.Secret);
+                o.SaveToken = true;
+                o.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = false,
                     ValidateAudience = false,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key)
+                    IssuerSigningKey = new SymmetricSecurityKey(Key),
                 };
             });
 
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            // Learn more about configuring Swagger/OpenAPI
+            // at https://aka.ms/aspnetcore/swashbuckle
+
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+
+            //Registrar o Swagger
+            builder.Services.AddSwaggerGen(options =>
+            {
+
+                //Personalizar a Págna inicial do Swagger
+                options.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Version = "v1",
+                    Title = "Projeto Blog Pessoal",
+                    Description = "Projeto Blog Pessoal - ASP.NET Core 7 - Entity Framework",
+                    Contact = new OpenApiContact
+                    {
+                        Name = "Vitor Cesario De Sousa Carvalho",
+                        Email = "vitorsousa676@gmail.com",
+                        Url = new Uri("https://github.com/Vitor676")
+                    },
+                    License = new OpenApiLicense
+                    {
+                        Name = "Github",
+                        Url = new Uri("https://github.com/Vitor676")
+                    }
+                });
+
+                //Adicionar a Segurança no Swagger
+                options.AddSecurityDefinition("JWT", new OpenApiSecurityScheme
+                {
+                    In = ParameterLocation.Header,
+                    Description = "Digite um Token JWT válido!",
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    BearerFormat = "JWT",
+                    Scheme = "Bearer"
+                });
+
+                //Adicionar a configuração visual da Segurança no Swagger
+                options.OperationFilter<AuthResponsesOperationFilter>();
+
+            });
+
+            // Adicionar o Fluent Validation no Swagger
+            builder.Services.AddFluentValidationRulesToSwagger();
+
 
             // Configuração do CORS
-            builder.Services.AddCors(options =>
-            {
+            builder.Services.AddCors(options => {
                 options.AddPolicy(name: "MyPolicy",
                     policy =>
                     {
                         policy.AllowAnyOrigin()
-                              .AllowAnyHeader()
-                              .AllowAnyMethod();
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
                     });
             });
 
             var app = builder.Build();
 
-            // Configuração para gerar o banco de dados automaticamente 
+            // Criar o Banco de dados e as tabelas Automaticamente
             using (var scope = app.Services.CreateAsyncScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 dbContext.Database.EnsureCreated();
+
             }
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
+            app.UseDeveloperExceptionPage();
+
+            // Habilitar o Swagger
+            app.UseSwagger();
+
+            app.UseSwaggerUI();
+
+            // Swagger como Página Inicial (Home) na Nuvem
+            if (app.Environment.IsProduction())
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Blog Pessoal - V1");
+                    c.RoutePrefix = string.Empty;
+                });
             }
 
-            // O CORS é inicializado aqui
+            //Habilitar CORS
+
             app.UseCors("MyPolicy");
+
+            // Habilitar a Autenticação e a Autorização
 
             app.UseAuthentication();
 
             app.UseAuthorization();
 
+            // Habilitar Controller
             app.MapControllers();
 
             app.Run();
         }
     }
 }
+
+// Cria uma Classe Parcial para executar os Testes no xUnit
+public partial class Program { }
